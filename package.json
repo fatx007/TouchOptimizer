@@ -1,0 +1,15 @@
+{
+  "name": "touch-optimization",
+  "version": "1.0.0",
+  "description": "Touch optimization tool with three optimization switches",
+  "main": "app.js",
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "systeminformation": "^5.21.22"
+  },
+  "author": "",
+  "license": "ISC"
+}

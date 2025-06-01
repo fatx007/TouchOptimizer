@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touch Optimization Tool</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        .switch input { 
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .slider {
+            background-color: #2196F3;
+        }
+        input:focus + .slider {
+            box-shadow: 0 0 1px #2196F3;
+        }
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        .optimization-card {
+            transition: all 0.3s ease;
+        }
+        .optimization-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+    </style>
+</head>
+<body class="bg-gray-100 min-h-screen p-8">
+    <div class="max-w-4xl mx-auto">
+        <h1 class="text-4xl font-bold text-center text-blue-600 mb-12">Touch Swipe Performance Elite - Fatx007</h1>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Touch Sensitivity -->
+            <div class="optimization-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">SensiMode++</h2>
+                    <label class="switch">
+                        <input type="checkbox" id="touchSensitivitySwitch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <p class="text-gray-600 mb-4">Điều chỉnh và tăng cường độ nhạy cảm ứng cao hơn bình thường gấp nhiều lần</p>
+                <div class="status text-sm text-gray-500" id="touchStatus">Status: Off</div>
+            </div>
+            
+            <!-- Zero Latency -->
+            <div class="optimization-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Anti Delay</h2>
+                    <label class="switch">
+                        <input type="checkbox" id="zeroLatencySwitch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <p class="text-gray-600 mb-4">Loại bỏ hoàn toàn độ trễ cảm ứng khi chạm màn hình</p>
+                <div class="status text-sm text-gray-500" id="latencyStatus">Status: Off</div>
+            </div>
+            
+            <!-- FPS Optimization -->
+            <div class="optimization-card bg-white rounded-xl shadow-md p-6">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-xl font-semibold">Optimization FPS</h2>
+                    <label class="switch">
+                        <input type="checkbox" id="fpsSwitch">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <p class="text-gray-600 mb-4">Tối ưu hóa thiết bị chỉ bằng 1 chạm, tăng cường FPS khi chơi game, giảm ứng dụng chạy nền</p>
+                <div class="status text-sm text-gray-500" id="fpsStatus">Status: Off</div>
+            </div>
+        </div>
+        
+        <div id="statusMessage" class="mt-8 p-4 rounded-lg bg-blue-50 text-blue-800 text-center hidden"></div>
+    </div>
+
+    <script>
+        // Get all switches
+        const touchSwitch = document.getElementById('touchSensitivitySwitch');
+        const latencySwitch = document.getElementById('zeroLatencySwitch');
+        const fpsSwitch = document.getElementById('fpsSwitch');
+        
+        // Status elements
+        const touchStatus = document.getElementById('touchStatus');
+        const latencyStatus = document.getElementById('latencyStatus');
+        const fpsStatus = document.getElementById('fpsStatus');
+        const statusMessage = document.getElementById('statusMessage');
+        
+        // Fetch current status
+        async function fetchStatus() {
+            try {
+                const response = await fetch('/api/status');
+                const data = await response.json();
+                
+                // Update switches
+                touchSwitch.checked = data.touchSensitivity;
+                latencySwitch.checked = data.zeroLatency;
+                fpsSwitch.checked = data.fpsOptimization;
+                
+                // Update status text
+                touchStatus.textContent = `Status: ${data.touchSensitivity ? 'On' : 'Off'}`;
+                latencyStatus.textContent = `Status: ${data.zeroLatency ? 'On' : 'Off'}`;
+                fpsStatus.textContent = `Status: ${data.fpsOptimization ? 'On' : 'Off'}`;
+                
+            } catch (error) {
+                console.error('Error fetching status:', error);
+                showMessage('Error connecting to the optimization service', 'error');
+            }
+        }
+        
+        // Toggle switch
+        async function toggleSwitch(switchName, switchElement, statusElement) {
+            try {
+                const response = await fetch(`/api/toggle/${switchName}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    statusElement.textContent = `Status: ${data.state ? 'On' : 'Off'}`;
+                    showMessage(data.message, 'success');
+                } else {
+                    // Revert the switch if there was an error
+                    switchElement.checked = !switchElement.checked;
+                    showMessage(data.message || 'Failed to update settings', 'error');
+                }
+            } catch (error) {
+                console.error('Error toggling switch:', error);
+                switchElement.checked = !switchElement.checked;
+                showMessage('Error connecting to the optimization service', 'error');
+            }
+        }
+        
+        // Show status message
+        function showMessage(message, type) {
+            statusMessage.textContent = message;
+            statusMessage.className = `mt-8 p-4 rounded-lg text-center ${type === 'error' ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}`;
+            statusMessage.classList.remove('hidden');
+            
+            // Hide message after 5 seconds
+            setTimeout(() => {
+                statusMessage.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Add event listeners
+        touchSwitch.addEventListener('change', () => toggleSwitch('touchSensitivity', touchSwitch, touchStatus));
+        latencySwitch.addEventListener('change', () => toggleSwitch('zeroLatency', latencySwitch, latencyStatus));
+        fpsSwitch.addEventListener('change', () => toggleSwitch('fpsOptimization', fpsSwitch, fpsStatus));
+        
+        // Initial fetch
+        fetchStatus();
+    </script>
+</body>
+</html>
